@@ -13,6 +13,7 @@ export default class autoComplete {
             value: '',
         }
         this.props = { selector, items, getItemValue };
+        this.cache = { suggestionElements: {} };
         this.input = document.querySelector(selector);
         this.input.addEventListener('focus', this.handleFocus.bind(this));
         this.input.addEventListener('blur', this.handleBlur.bind(this));
@@ -20,6 +21,9 @@ export default class autoComplete {
         this.input.addEventListener('keydown', this.handleKeydown.bind(this));
         this.suggestionUL = document.createElement('ul');
         this.suggestionUL.classList.add('suggestion');
+        this.suggestionUL.addEventListener('mouseenter', () => this.preventBlur = true);
+        this.suggestionUL.addEventListener('mouseleave', () => this.preventBlur = false);
+        this.suggestionUL.addEventListener('touchstart', () => this.preventBlur = true);
         this.input.parentNode.insertBefore(this.suggestionUL, this.input.nextSibling);
 
     }
@@ -29,7 +33,9 @@ export default class autoComplete {
     }
 
     handleBlur(e) {
-        this.setState({ show: false });
+        if (!this.preventBlur) {
+            this.setState({ show: false });
+        }
     }
 
     handleKeyup(e) {
@@ -98,6 +104,10 @@ export default class autoComplete {
         }
     }
 
+    handleSuggestionClick(value) {
+        this.setState({ show: false, value });
+    }
+
     setState(newState) {
         this.state = { ...this.state, ...newState };
         this.render();
@@ -112,15 +122,21 @@ export default class autoComplete {
         this.getSuggestions().forEach((suggestion, index) => {
             const { logo, name } = suggestion;
             const value = getItemValue(suggestion);
-            const suggestionElement = document.createElement('li');
-            const img = document.createElement('img');
-            img.setAttribute('src', logo);
-            const span = document.createElement('span');
-            span.textContent = name;
-            suggestionElement.appendChild(img);
-            suggestionElement.appendChild(span);
+            let suggestionElement = this.cache.suggestionElements[value];
+            if (!suggestionElement) {
+                suggestionElement = document.createElement('li');
+                const img = document.createElement('img');
+                img.setAttribute('src', logo);
+                const span = document.createElement('span');
+                span.textContent = name;
+                suggestionElement.appendChild(img);
+                suggestionElement.appendChild(span);
+                this.cache.suggestionElements[value] = suggestionElement;
+            }
             const isSelected = selectedIndex === index;
             suggestionElement.classList.toggle('selected', isSelected);
+            suggestionElement.onclick = e => this.handleSuggestionClick(value);
+            suggestionElement.onmouseenter = () => this.setState({ selectedIndex: index });
             fragment.appendChild(suggestionElement);
         })
         this.suggestionUL.innerHTML = "";
