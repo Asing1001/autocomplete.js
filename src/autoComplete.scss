@@ -1,0 +1,42 @@
+$tablet-width: 768px;
+@mixin mobile {
+    @media (max-width: #{$tablet-width - 1px}) {
+        @content;
+    }
+}
+
+ul.suggestion {        
+    width: 400px;
+    height: auto;
+    display: none;
+    @include mobile {
+        width: 100%;
+    }
+    &.show {
+        display: block;
+    }
+    li {
+        cursor: pointer;
+        height: 30px;
+        list-style-type: none;
+        padding: 5px;
+        display: flex;
+        align-items: center;
+        &:nth-child(odd) {
+            background: #fcfcfc;
+        }
+        &:nth-child(even) {
+            background: #eeeeee;
+        }
+        &.selected {
+            background: #ccc;
+        }
+        img {
+            height: 100%;
+            margin-right: 5px;
+        }
+        span {
+            max-width: 50%;
+        }
+    }
+}
