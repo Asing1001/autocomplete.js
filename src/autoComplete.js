@@ -12,6 +12,8 @@ export default class autoComplete {
             show: false,
             value: '',
         }
+
+        this.autoCompleteKey = `autocomplete${selector}`;
         this.props = { selector, items, getItemValue };
         this.cache = { suggestionElements: {} };
         this.input = document.querySelector(selector);
@@ -25,7 +27,6 @@ export default class autoComplete {
         this.suggestionUL.addEventListener('mouseleave', () => this.preventBlur = false);
         this.suggestionUL.addEventListener('touchstart', () => this.preventBlur = true);
         this.input.parentNode.insertBefore(this.suggestionUL, this.input.nextSibling);
-
     }
 
     handleFocus(e) {
@@ -93,19 +94,41 @@ export default class autoComplete {
         const { value } = this.state;
         return items
             .filter(item => getItemValue(item).toLowerCase().indexOf(value.toLowerCase()) !== -1)
-
+            .sort((a, b) => {
+                return Number(this.isHistoryExist(getItemValue(b))) - Number(this.isHistoryExist(getItemValue(a)));
+            })
     }
 
     handleEnter(e) {
         let { selectedIndex, value, show } = this.state;
         if (show && selectedIndex >= 0) {
             value = this.props.getItemValue(this.getSuggestions()[selectedIndex]);
+            this.setHistory(value);
             this.setState({ selectedIndex: -1, value, show: false });
         }
     }
 
     handleSuggestionClick(value) {
+        this.setHistory(value);
         this.setState({ show: false, value });
+    }
+
+    setHistory(value) {
+        let history = JSON.parse(localStorage.getItem(this.autoCompleteKey)) || {};
+        history[value] = true;
+        localStorage.setItem(this.autoCompleteKey, JSON.stringify(history));
+    }
+
+    removeHistory(value) {
+        const history = JSON.parse(localStorage.getItem(this.autoCompleteKey));
+        history[value] = false;
+        localStorage.setItem(this.autoCompleteKey, JSON.stringify(history));
+        this.setState();
+    }
+
+    isHistoryExist(value) {
+        const history = JSON.parse(localStorage.getItem(this.autoCompleteKey));
+        return history ? Boolean(history[value]) : false;
     }
 
     setState(newState) {
@@ -137,6 +160,18 @@ export default class autoComplete {
             suggestionElement.classList.toggle('selected', isSelected);
             suggestionElement.onclick = e => this.handleSuggestionClick(value);
             suggestionElement.onmouseenter = () => this.setState({ selectedIndex: index });
+            if (this.isHistoryExist(value)) {
+                let button = suggestionElement.querySelector('button');
+                if (!button) button = document.createElement('button');
+                button.textContent = 'remove histroy';
+                button.classList.remove('hidden');
+                button.onclick = e => {
+                    e.stopPropagation();
+                    button.classList.toggle('hidden', true);
+                    this.removeHistory(value);
+                }
+                suggestionElement.appendChild(button);
+            }
             fragment.appendChild(suggestionElement);
         })
         this.suggestionUL.innerHTML = "";

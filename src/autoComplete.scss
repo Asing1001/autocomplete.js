@@ -38,5 +38,18 @@ ul.suggestion {
         span {
             max-width: 50%;
         }
+        button {
+            font-family: inherit;
+            margin-left: auto;
+            border: 0;
+            border-radius: 5px;
+            cursor: pointer;
+            &:hover{
+                background: #fcfcfc
+            }
+            &.hidden {
+                display: none;
+            }
+        }
     }
 }
