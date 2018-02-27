@@ -1,54 +1,68 @@
 $tablet-width: 768px;
+$suggestion-max-height: 400px;
+$suggestion-element-height: 40px;
+
 @mixin mobile {
     @media (max-width: #{$tablet-width - 1px}) {
         @content;
     }
 }
 
-ul.suggestion {        
-    width: 400px;
-    height: auto;
-    display: none;
-    @include mobile {
-        width: 100%;
-    }
-    &.show {
-        display: block;
-    }
-    li {
-        cursor: pointer;
-        height: 30px;
-        list-style-type: none;
-        padding: 5px;
-        display: flex;
-        align-items: center;
-        &:nth-child(odd) {
-            background: #fcfcfc;
+:export {
+    suggestionMaxHeight : $suggestion-max-height;
+    suggestionElementHeight: $suggestion-element-height
+}
+
+.suggestion-wrap {
+    position: relative;
+    ul.suggestion {
+        width: 400px;
+        max-height: $suggestion-max-height;
+        overflow: auto;
+        display: none;
+        position: absolute;
+        @include mobile {
+            width: 100%;
         }
-        &:nth-child(even) {
-            background: #eeeeee;
+        &.show {
+            display: block;
         }
-        &.selected {
-            background: #ccc;
-        }
-        img {
-            height: 100%;
-            margin-right: 5px;
-        }
-        span {
-            max-width: 50%;
-        }
-        button {
-            font-family: inherit;
-            margin-left: auto;
-            border: 0;
-            border-radius: 5px;
+        li {
             cursor: pointer;
-            &:hover{
-                background: #fcfcfc
+            box-sizing: border-box;
+            height: $suggestion-element-height;
+            list-style-type: none;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            &:nth-child(odd) {
+                background: #fcfcfc;
             }
-            &.hidden {
-                display: none;
+            &:nth-child(even) {
+                background: #eeeeee;
+            }
+            &.selected {
+                background: #ccc;
+            }
+            img {
+                height: 100%;
+                margin-right: 5px;
+            }
+            span {
+                max-width: 50%;
+            }
+            button {
+                font-family: inherit;
+                margin-left: auto;
+                border: 0;
+                border-radius: 5px;
+                cursor: pointer;
+                &:hover {
+                    background: #fcfcfc
+                }
+                &.hidden {
+                    display: none;
+                }
             }
         }
     }

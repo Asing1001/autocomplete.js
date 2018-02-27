@@ -1,9 +1,15 @@
+import styles from './autoComplete.scss'
+
+const suggestionElementHeight = styles.suggestionElementHeight.replace('px', '') * 1;
+const suggestionMaxHeight = styles.suggestionMaxHeight.replace('px', '') * 1;
+const maxVisibleSuggestions = suggestionMaxHeight / suggestionElementHeight;
 const keyCode = {
     up: 38,
     down: 40,
     enter: 13,
     esc: 27
 }
+
 
 export default class autoComplete {
     constructor({ selector, items, getItemValue }) {
@@ -21,12 +27,15 @@ export default class autoComplete {
         this.input.addEventListener('blur', this.handleBlur.bind(this));
         this.input.addEventListener('keyup', this.handleKeyup.bind(this));
         this.input.addEventListener('keydown', this.handleKeydown.bind(this));
+        const suggestionWrap = document.createElement('div');
+        suggestionWrap.classList.add('suggestion-wrap');
         this.suggestionUL = document.createElement('ul');
         this.suggestionUL.classList.add('suggestion');
         this.suggestionUL.addEventListener('mouseenter', () => this.preventBlur = true);
         this.suggestionUL.addEventListener('mouseleave', () => this.preventBlur = false);
         this.suggestionUL.addEventListener('touchstart', () => this.preventBlur = true);
-        this.input.parentNode.insertBefore(this.suggestionUL, this.input.nextSibling);
+        suggestionWrap.appendChild(this.suggestionUL);
+        this.input.parentNode.insertBefore(suggestionWrap, this.input.nextSibling);
     }
 
     handleFocus(e) {
@@ -34,6 +43,7 @@ export default class autoComplete {
     }
 
     handleBlur(e) {
+        // if preventBlur not set, suggestion will hide and click event can not be triggered
         if (!this.preventBlur) {
             this.setState({ show: false });
         }
@@ -139,10 +149,12 @@ export default class autoComplete {
     render() {
         const { selectedIndex, show, value } = this.state;
         const { getItemValue } = this.props;
-        this.suggestionUL.classList.toggle('show', show);
         const fragment = document.createDocumentFragment();
+        const suggestions = this.getSuggestions();
+        let selectedElement;
+        this.suggestionUL.classList.toggle('show', show);
         this.input.value = value;
-        this.getSuggestions().forEach((suggestion, index) => {
+        suggestions.forEach((suggestion, index) => {
             const { logo, name } = suggestion;
             const value = getItemValue(suggestion);
             let suggestionElement = this.cache.suggestionElements[value];
@@ -157,6 +169,7 @@ export default class autoComplete {
                 this.cache.suggestionElements[value] = suggestionElement;
             }
             const isSelected = selectedIndex === index;
+            if (isSelected) selectedElement = suggestionElement;
             suggestionElement.classList.toggle('selected', isSelected);
             suggestionElement.onclick = e => this.handleSuggestionClick(value);
             suggestionElement.onmouseenter = () => this.setState({ selectedIndex: index });
@@ -176,5 +189,18 @@ export default class autoComplete {
         })
         this.suggestionUL.innerHTML = "";
         this.suggestionUL.appendChild(fragment);
+        if (selectedElement && suggestions.length > maxVisibleSuggestions) {
+            this.makeSelectedElementVisible(selectedElement);
+        }
+    }
+
+    makeSelectedElementVisible(selectedElement) {
+        const scrollTop = this.suggestionUL.scrollTop;
+        const selectedElementTop = selectedElement.getBoundingClientRect().top - this.suggestionUL.getBoundingClientRect().top;
+        if (selectedElementTop + suggestionElementHeight - suggestionMaxHeight > 0) {
+            this.suggestionUL.scrollTop = selectedElementTop + suggestionElementHeight + scrollTop - suggestionMaxHeight;
+        } else if (selectedElementTop < 0) {
+            this.suggestionUL.scrollTop = selectedElementTop + scrollTop;
+        }
     }
 }
